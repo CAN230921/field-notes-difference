@@ -21,6 +21,8 @@ Open http://localhost:8080. The game is self-contained and requires no downloads
 - Click either plate to mark a difference. Both plates show the mark.
 - Tab to a plate, use the arrows to aim, and press Enter or Space to mark.
   Hold Shift for finer aim.
+- Z toggles the synchronized 2× inspection window. Aim with the pointer or
+  arrows to see the same detail in both plates.
 - H uses one of your two hints per station. P pauses. Timed mode adds a
   four-second penalty for misses and a six-second penalty for hints.
 

@@ -11,13 +11,34 @@ function makeArt(scene, version) {
   return art;
 }
 
+function renderInspection(context, original, point) {
+  const { x, y } = point;
+  const width = 144, margin = 16, sample = width / 2;
+  const left = x <= WIDTH/2 ? WIDTH-width-margin : margin;
+  const top = y <= HEIGHT/2 ? HEIGHT-width-margin : margin;
+  const ink = painter(context);
+  ink.oval(x, y, 13, 13, null, '#162b25', 4);
+  ink.oval(x, y, 13, 13, null, '#ffda9d', 2);
+  ink.box(left+4, top+5, width+2, width+2, '#0e2117a0');
+  ink.box(left, top, width, width, '#26332e');
+  context.drawImage(original, x-sample/2, y-sample/2, sample, sample, left, top, width, width);
+  context.strokeStyle = '#f8d799';
+  context.lineWidth = 2;
+  context.strokeRect(left, top, width, width);
+  ink.box(left+5, top+5, 33, 21, '#152922', '#e5c183');
+  ink.label('2×', left+13, top+20, 14, '#ffdf9f', 'monospace');
+  const middleX = left+width/2, middleY = top+width/2;
+  ink.oval(middleX, middleY, 5, 5, null, '#14291f', 3);
+  ink.oval(middleX, middleY, 5, 5, null, '#ffda9d', 1.2);
+}
+
 export function createPlates(canvases) {
   const layers = canvases.map(element => ({ element, context: element.getContext('2d') }));
   let art = [];
   function setScene(scene) {
     art = [makeArt(scene, false), makeArt(scene, true)];
   }
-  function render({ found, targets, pointer, hint, miss, now }) {
+  function render({ found, targets, pointer, inspectionPoint, hint, miss, now }) {
     layers.forEach(({ element, context }, index) => {
       context.drawImage(art[index], 0, 0);
       const ink = painter(context);
@@ -47,7 +68,8 @@ export function createPlates(canvases) {
         ink.beam([[x-4,y-4],[x+4,y+4]], '#ffaf92', 2);
         ink.beam([[x+4,y-4],[x-4,y+4]], '#ffaf92', 2);
       }
-      if (pointer && document.activeElement === element) {
+      if (inspectionPoint) renderInspection(context, art[index], inspectionPoint);
+      else if (pointer && document.activeElement === element) {
         const { x, y } = pointer;
         ink.oval(x, y, 10, 10, null, '#1b332e', 4);
         ink.oval(x, y, 10, 10, null, '#fff9e1', 1.6);

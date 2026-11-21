@@ -14,6 +14,7 @@ const remaining = get('remaining');
 const dialogue = get('pause-dialog');
 const hintButton = get('hint');
 const pauseButton = get('pause');
+const inspectButton = get('inspect');
 const advance = get('advance');
 const sound = get('sound');
 const relax = get('relax');
@@ -23,6 +24,9 @@ let sceneIndex = 0;
 let untimed = false;
 let muted = true;
 let pointer = null;
+let inspection = false;
+let inspectionPoint = null;
+const centerPoint = () => ({ x: WIDTH/2, y: HEIGHT/2 });
 let nextFrameTime = performance.now();
 
 function freshCase(scene) {
@@ -54,6 +58,7 @@ function updatePanel() {
   const state = current();
   const count = scene().targets.length;
   remaining.textContent = `${count - state.found.size} / ${count}`;
+  get('found-count').textContent = `✓ ${state.found.size} found`;
   get('ticks').replaceChildren(...Array.from({ length: count }, (_, i) => {
     const tick = document.createElement('span');
     if (i < state.found.size) tick.className = 'done';
@@ -77,6 +82,7 @@ function selectScene(index) {
   sceneIndex = index;
   nextFrameTime = performance.now();
   pointer = null;
+  inspectionPoint = inspection ? centerPoint() : null;
   get('location').textContent = `${scene().region}  /  ${scene().difficulty}`;
   get('title').textContent = scene().title;
   plates.setScene(scene());
@@ -113,6 +119,7 @@ function mark(x, y, side) {
     if (!untimed) state.left = Math.max(0, state.left - 4000);
     announce('No difference there', untimed ? 'Compare the matching area on both plates.' : '−4 seconds');
     playSound('miss');
+    draw(now);
     return;
   }
   if (state.found.has(hit.index)) {
@@ -159,7 +166,25 @@ function hint() {
 
 function pause() {
   if (dialogue.open) dialogue.close();
-  else if (usable()) dialogue.showModal();
+  else if (usable()) {
+    draw(performance.now());
+    if (usable()) dialogue.showModal();
+  }
+}
+
+function toggleInspection() {
+  if (dialogue.open) return;
+  inspection = !inspection;
+  inspectionPoint = inspection ? { ...(pointer ?? centerPoint()) } : null;
+  inspectButton.setAttribute('aria-pressed', String(inspection));
+}
+
+function canvasPoint(canvas, event) {
+  const bounds = canvas.getBoundingClientRect();
+  return {
+    x: (event.clientX-bounds.left)/bounds.width*WIDTH,
+    y: (event.clientY-bounds.top)/bounds.height*HEIGHT,
+  };
 }
 
 function draw(now) {
@@ -187,7 +212,7 @@ function draw(now) {
   timer.parentElement.classList.toggle('urgent', !untimed && seconds < 20 && !state.done);
   get('timer-label').textContent = untimed ? 'UNTIMED' : 'TIME LEFT';
   get('time-fill').style.width = untimed ? '100%' : `${state.left / (scene().seconds*10)}%`;
-  plates.render({ ...state, pointer, targets: scene().targets, now });
+  plates.render({ ...state, pointer, inspectionPoint, targets: scene().targets, now });
 }
 
 function loop(now) {
@@ -207,21 +232,29 @@ scenes.forEach(({ tab }, index) => {
 canvases.forEach((canvas, side) => {
   canvas.addEventListener('click', event => {
     if (!event.detail) return;
-    const bounds = canvas.getBoundingClientRect();
+    const position = canvasPoint(canvas, event);
     pointer = null;
-    mark((event.clientX-bounds.left)/bounds.width*WIDTH, (event.clientY-bounds.top)/bounds.height*HEIGHT, side);
+    if (inspection) inspectionPoint = position;
+    mark(position.x, position.y, side);
+  });
+  canvas.addEventListener('pointermove', event => {
+    if (inspection) {
+      pointer = null;
+      inspectionPoint = canvasPoint(canvas, event);
+    }
   });
   canvas.addEventListener('pointerdown', () => { pointer = null; });
   canvas.addEventListener('keydown', event => {
     const move = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[event.key];
     if (move || event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      pointer ??= { x: WIDTH/2, y: HEIGHT/2 };
+      pointer ??= inspectionPoint ? { ...inspectionPoint } : centerPoint();
     }
     if (move) {
       const step = event.shiftKey ? 3 : 10;
       pointer.x = Math.max(0, Math.min(WIDTH, pointer.x + move[0]*step));
       pointer.y = Math.max(0, Math.min(HEIGHT, pointer.y + move[1]*step));
+      if (inspection) inspectionPoint = { ...pointer };
     } else if (!event.repeat && (event.key === 'Enter' || event.key === ' ')) {
       mark(pointer.x, pointer.y, side);
     }
@@ -233,6 +266,7 @@ document.addEventListener('keydown', event => {
   if (event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
   if (event.key.toLowerCase() === 'h') hint();
   if (event.key.toLowerCase() === 'p') pause();
+  if (event.key.toLowerCase() === 'z') toggleInspection();
 });
 document.addEventListener('visibilitychange', () => {
   if (document.hidden && current().active && usable()) pause();
@@ -240,6 +274,7 @@ document.addEventListener('visibilitychange', () => {
 
 hintButton.addEventListener('click', hint);
 pauseButton.addEventListener('click', pause);
+inspectButton.addEventListener('click', toggleInspection);
 const restartScene = () => {
   cases[sceneIndex] = freshCase(scene());
   selectScene(sceneIndex);

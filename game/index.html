@@ -11,7 +11,7 @@
 <body>
   <div class="sheet">
     <header class="masthead">
-      <div class="identity"><span class="monogram" aria-hidden="true">✳</span><div><b>FIELD NOTES</b><span>Spot the difference</span></div></div>
+      <div class="identity"><span class="monogram" aria-hidden="true">✳</span><div><span>FIELD NOTES</span><b>Spot the Difference</b></div></div>
       <div class="station-tabs" id="stations" aria-label="Field stations"></div>
       <button type="button" class="sound" id="sound" aria-pressed="false">Sound off</button>
     </header>
@@ -20,17 +20,18 @@
         <div class="introduction">
           <div><p class="eyebrow" id="location"></p><h1 id="title"></h1></div>
           <div class="instruments">
-            <div class="readout"><span>REMAINING</span><strong id="remaining"></strong><div id="ticks" aria-hidden="true"></div></div>
+            <div class="readout" aria-label="Differences remaining"><span>DIFFERENCES LEFT</span><strong id="remaining"></strong><div id="ticks" aria-hidden="true"></div></div>
             <div class="readout clock"><span id="timer-label">TIME LEFT</span><strong id="timer"></strong><div class="track"><i id="time-fill"></i></div></div>
           </div>
         </div>
         <div class="plates">
-          <figure><figcaption><b>A</b> Original plate</figcaption><canvas width="640" height="450" id="plate-a" tabindex="0" aria-label="Original illustration. Use arrow keys to aim and Enter or Space to mark."></canvas></figure>
-          <figure><figcaption><b>B</b> Comparison plate</figcaption><canvas width="640" height="450" id="plate-b" tabindex="0" aria-label="Comparison illustration. Use arrow keys to aim and Enter or Space to mark."></canvas></figure>
+          <figure><figcaption><b>A</b> Original image</figcaption><canvas width="640" height="450" id="plate-a" tabindex="0" aria-label="Original illustration. Use arrow keys to aim and Enter or Space to mark."></canvas></figure>
+          <figure><figcaption><b>B</b> Changed image</figcaption><canvas width="640" height="450" id="plate-b" tabindex="0" aria-label="Comparison illustration. Use arrow keys to aim and Enter or Space to mark."></canvas></figure>
         </div>
         <div class="desk">
-          <div class="feedback" id="feedback" role="status"></div>
+          <div class="notes"><span class="found-count" id="found-count"></span><div class="feedback" id="feedback" role="status"></div></div>
           <div class="actions">
+            <button type="button" id="inspect" aria-pressed="false" title="Magnify the same point in both images">Inspect 2× <kbd>Z</kbd></button>
             <button type="button" id="pause">Pause <kbd>P</kbd></button>
             <button type="button" id="hint">Hint <kbd>H</kbd></button>
             <button type="button" id="advance" class="primary" hidden>Next station <span aria-hidden="true">→</span></button>
